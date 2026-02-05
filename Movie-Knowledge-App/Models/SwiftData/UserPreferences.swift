@@ -23,6 +23,16 @@ final class UserPreferences {
     // Store user profile ID instead of relationship
     var userProfileId: UUID?
 
+    // User-added categories for learning list
+    @Relationship var addedCategories: [CategoryModel]
+
+    // Category filter persistence
+    var categoryCompletionFilter: String?
+    var categoryContentTypeFilter: String?
+    var categoryRegionFilter: String?
+    var categoryLessonCountFilter: String?
+    var categoryDifficultyFilter: String?
+
     init(
         id: UUID = UUID(),
         selectedInterests: [String] = [],
@@ -33,7 +43,13 @@ final class UserPreferences {
         hapticsEnabled: Bool = true,
         hasCompletedOnboarding: Bool = false,
         isSignedIn: Bool = false,
-        userProfileId: UUID? = nil
+        userProfileId: UUID? = nil,
+        addedCategories: [CategoryModel] = [],
+        categoryCompletionFilter: String? = nil,
+        categoryContentTypeFilter: String? = nil,
+        categoryRegionFilter: String? = nil,
+        categoryLessonCountFilter: String? = nil,
+        categoryDifficultyFilter: String? = nil
     ) {
         self.id = id
         self.selectedInterests = selectedInterests
@@ -45,6 +61,12 @@ final class UserPreferences {
         self.hasCompletedOnboarding = hasCompletedOnboarding
         self.isSignedIn = isSignedIn
         self.userProfileId = userProfileId
+        self.addedCategories = addedCategories
+        self.categoryCompletionFilter = categoryCompletionFilter
+        self.categoryContentTypeFilter = categoryContentTypeFilter
+        self.categoryRegionFilter = categoryRegionFilter
+        self.categoryLessonCountFilter = categoryLessonCountFilter
+        self.categoryDifficultyFilter = categoryDifficultyFilter
     }
 
     // Computed property for daily goal display

@@ -90,14 +90,22 @@ struct PickYearView: View {
                         }) {
                             Text("\(year)")
                                 .font(.system(size: 14, weight: .medium))
-                                .foregroundStyle(Int(selectedYear) == year ? .white : .blue)
+                                .foregroundStyle(Int(selectedYear) == year ? .white : DesignSystem.Colors.primaryButton)
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 8)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .fill(Int(selectedYear) == year ? Color.blue : Color.blue.opacity(0.1))
-                                )
                         }
+                        .buttonStyle(DepthButtonStyle(
+                            fill: Int(selectedYear) == year
+                                ? DesignSystem.Colors.primaryButton
+                                : DesignSystem.Colors.primaryButton.opacity(0.2),
+                            base: Int(selectedYear) == year
+                                ? DesignSystem.Colors.buttonDepthBase
+                                : DesignSystem.Colors.buttonDepthBase.opacity(0.2),
+                            cornerRadius: 8,
+                            depth: 2,
+                            pressedDepth: 1,
+                            shadowRadius: 0
+                        ))
                         .disabled(hasSubmitted)
                     }
                 }
@@ -110,15 +118,9 @@ struct PickYearView: View {
                 onAnswer(String(Int(selectedYear)))
             }) {
                 Text("Submit Answer")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(Color.blue)
-                    )
+                    .depthButtonLabel(font: .system(size: 18, weight: .semibold), verticalPadding: 16)
             }
+            .buttonStyle(DepthButtonStyle(cornerRadius: 12))
             .disabled(hasSubmitted)
             .opacity(hasSubmitted ? 0.6 : 1.0)
         }

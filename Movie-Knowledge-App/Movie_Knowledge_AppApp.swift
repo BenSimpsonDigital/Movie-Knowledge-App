@@ -14,8 +14,8 @@ struct Movie_Knowledge_AppApp: App {
 
     init() {
         do {
-            container = try ModelContainer(
-                for: UserProfile.self,
+            let schema = Schema([
+                UserProfile.self,
                 CategoryModel.self,
                 SubCategory.self,
                 Challenge.self,
@@ -25,7 +25,10 @@ struct Movie_Knowledge_AppApp: App {
                 UserPreferences.self,
                 Movie.self,
                 Director.self
-            )
+            ])
+            
+            let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+            container = try ModelContainer(for: schema, configurations: config)
 
             // Seed data on first launch
             let context = ModelContext(container)
@@ -33,8 +36,42 @@ struct Movie_Knowledge_AppApp: App {
             seeder.seedDataIfNeeded()
 
         } catch {
-            fatalError("Failed to initialize ModelContainer: \(error)")
-        }
+            print("❌ ModelContainer Error: \(error)")
+            print("❌ Error Details: \(String(describing: error))")
+            
+            // If schema migration fails, delete the old store and try again
+            print("⚠️ Attempting to reset data store due to schema change...")
+            do {
+                let schema = Schema([
+                    UserProfile.self,
+                    CategoryModel.self,
+                    SubCategory.self,
+                    Challenge.self,
+                    CategoryProgress.self,
+                    Badge.self,
+                    DailyLessonRecord.self,
+                    UserPreferences.self,
+                    Movie.self,
+                    Director.self
+                ])
+                
+                // Delete the old store file
+                let url = URL.applicationSupportDirectory.appending(path: "default.store")
+                try? FileManager.default.removeItem(at: url)
+                
+                let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+                container = try ModelContainer(for: schema, configurations: config)
+                
+                // Seed data after reset
+                let context = ModelContext(container)
+                let seeder = DataSeeder(context: context)
+                seeder.seedDataIfNeeded()
+                
+                print("✅ Data store reset successful")
+            } catch {
+                fatalError("Failed to initialize ModelContainer even after reset: \(error)")
+            }
+         }
     }
 
     var body: some Scene {

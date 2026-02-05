@@ -14,6 +14,7 @@ final class CategoryModel {
     @Attribute(.unique) var id: UUID
     var title: String
     var subtitle: String
+    var journeySubtitle: String
     var tag: String?
     var iconName: String?
     var colorRed: Double
@@ -28,6 +29,7 @@ final class CategoryModel {
         id: UUID = UUID(),
         title: String,
         subtitle: String,
+        journeySubtitle: String = "",
         tag: String? = nil,
         iconName: String? = nil,
         colorRed: Double,
@@ -38,6 +40,7 @@ final class CategoryModel {
         self.id = id
         self.title = title
         self.subtitle = subtitle
+        self.journeySubtitle = journeySubtitle
         self.tag = tag
         self.iconName = iconName
         self.colorRed = colorRed
@@ -50,5 +53,13 @@ final class CategoryModel {
     // Computed property for SwiftUI Color
     var accentColor: Color {
         Color(red: colorRed, green: colorGreen, blue: colorBlue)
+    }
+
+    var sheetBackgroundColor: Color {
+        let blend = 0.10
+        let red = (1.0 - blend) + (colorRed * blend)
+        let green = (1.0 - blend) + (colorGreen * blend)
+        let blue = (1.0 - blend) + (colorBlue * blend)
+        return Color(red: red, green: green, blue: blue)
     }
 }

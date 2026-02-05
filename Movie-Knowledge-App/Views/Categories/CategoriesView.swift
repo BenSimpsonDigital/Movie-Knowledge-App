@@ -14,16 +14,6 @@ struct CategoriesView: View {
 
     var body: some View {
         ExpandableCategoryListView()
-            .navigationTitle("Learn")
-            .navigationBarTitleDisplayMode(.inline)
-            .navigationDestination(isPresented: Binding(
-                get: { appState.activeCategory != nil },
-                set: { if !$0 { appState.activeCategory = nil } }
-            )) {
-                if let category = appState.activeCategory {
-                    SubCategoryListView(category: category)
-                }
-            }
     }
 }
 

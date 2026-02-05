@@ -20,9 +20,6 @@ final class AppState {
     // Onboarding state
     var hasCompletedOnboarding: Bool = false
 
-    // Currently selected tab
-    var selectedTab: AppTab = .home
-
     // Active category for quiz navigation
     var activeCategory: CategoryModel?
     var activeSubCategory: SubCategory?
@@ -75,10 +72,6 @@ final class AppState {
         remainingLives <= 0
     }
 
-    func navigateTo(tab: AppTab) {
-        self.selectedTab = tab
-    }
-
     // MARK: - Service Initialization
 
     func initializeServices(context: ModelContext) {
@@ -97,7 +90,7 @@ final class AppState {
         } else {
             // Create default profile on first launch
             let newProfile = UserProfile(
-                username: "Movie Buff",
+                username: "Ben",
                 currentXP: 0,
                 currentLevel: 1,
                 currentStreak: 0,

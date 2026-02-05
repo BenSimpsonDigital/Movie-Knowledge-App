@@ -74,15 +74,9 @@ struct DailyGoalView: View {
                 onContinue()
             }) {
                 Text("Continue")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 18)
-                    .background(
-                        RoundedRectangle(cornerRadius: 16)
-                            .fill(DesignSystem.Colors.primaryButton)
-                    )
+                    .depthButtonLabel(font: .system(size: 18, weight: .semibold), verticalPadding: 18)
             }
+            .buttonStyle(DepthButtonStyle(cornerRadius: 16))
             .padding(.horizontal, 24)
             .padding(.bottom, 40)
             .opacity(showContent ? 1.0 : 0.0)

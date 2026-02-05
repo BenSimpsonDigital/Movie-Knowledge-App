@@ -26,6 +26,10 @@ final class UserProfile {
     var lastPlayedSubCategoryId: UUID?
     var timeSpentMinutes: Int
     var favouriteCategoryIds: [UUID]
+    var dailyFocusDate: Date? = nil
+    var dailyFocusCategoryId: UUID? = nil
+    var dailyFocusSubCategoryId: UUID? = nil
+    var dailyFocusCompleted: Bool = false
 
     // Relationships
     @Relationship(deleteRule: .cascade) var categoryProgress: [CategoryProgress]
@@ -34,7 +38,7 @@ final class UserProfile {
 
     init(
         id: UUID = UUID(),
-        username: String = "Movie Buff",
+        username: String = "Ben",
         currentXP: Int = 0,
         currentLevel: Int = 1,
         currentStreak: Int = 0,
@@ -46,7 +50,11 @@ final class UserProfile {
         lastPlayedCategoryId: UUID? = nil,
         lastPlayedSubCategoryId: UUID? = nil,
         timeSpentMinutes: Int = 0,
-        favouriteCategoryIds: [UUID] = []
+        favouriteCategoryIds: [UUID] = [],
+        dailyFocusDate: Date? = nil,
+        dailyFocusCategoryId: UUID? = nil,
+        dailyFocusSubCategoryId: UUID? = nil,
+        dailyFocusCompleted: Bool = false
     ) {
         self.id = id
         self.username = username
@@ -62,6 +70,10 @@ final class UserProfile {
         self.lastPlayedSubCategoryId = lastPlayedSubCategoryId
         self.timeSpentMinutes = timeSpentMinutes
         self.favouriteCategoryIds = favouriteCategoryIds
+        self.dailyFocusDate = dailyFocusDate
+        self.dailyFocusCategoryId = dailyFocusCategoryId
+        self.dailyFocusSubCategoryId = dailyFocusSubCategoryId
+        self.dailyFocusCompleted = dailyFocusCompleted
         self.categoryProgress = []
         self.earnedBadges = []
         self.dailyLessonHistory = []

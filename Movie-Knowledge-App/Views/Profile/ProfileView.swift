@@ -17,6 +17,8 @@ struct ProfileView: View {
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 0) {
+                screenTitle
+
                 // Profile Header
                 profileHeader
                     .padding(.bottom, DesignSystem.Spacing.xxl)
@@ -71,8 +73,20 @@ struct ProfileView: View {
                 }
             }
         }
-        .padding(.top, DesignSystem.Spacing.xl)
         .opacity(showContent ? 1 : 0)
+    }
+
+    // MARK: - Screen Title
+    private var screenTitle: some View {
+        Text("Profile")
+            .font(DesignSystem.Typography.viewTitle())
+            .foregroundStyle(DesignSystem.Colors.textPrimary)
+            .padding(.leading, 2)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.top, DesignSystem.Spacing.xl)
+            .padding(.horizontal, DesignSystem.Spacing.screenMargin)
+            .padding(.bottom, DesignSystem.Spacing.lg)
+            .opacity(showContent ? 1 : 0)
     }
 
     // MARK: - XP Progress Card

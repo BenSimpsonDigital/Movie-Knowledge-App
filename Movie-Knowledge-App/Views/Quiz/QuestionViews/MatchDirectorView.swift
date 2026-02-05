@@ -56,15 +56,9 @@ struct MatchDirectorView: View {
                 onAnswer(selected)
             }) {
                 Text("Confirm Selection")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(selectedDirector != nil ? Color.blue : Color.gray.opacity(0.4))
-                    )
+                    .depthButtonLabel(font: .system(size: 18, weight: .semibold), verticalPadding: 16)
             }
+            .buttonStyle(DepthButtonStyle(cornerRadius: 12))
             .disabled(selectedDirector == nil || hasSubmitted)
             .opacity(hasSubmitted ? 0.6 : 1.0)
         }
@@ -85,17 +79,17 @@ struct DirectorOptionButton: View {
                 // Director icon
                 Image(systemName: "person.fill")
                     .font(.system(size: 20))
-                    .foregroundStyle(isSelected ? .white : .blue)
+                    .foregroundStyle(.white)
                     .frame(width: 44, height: 44)
                     .background(
                         Circle()
-                            .fill(isSelected ? Color.blue : Color.blue.opacity(0.1))
+                            .fill(Color.white.opacity(0.18))
                     )
 
                 // Name
                 Text(name)
                     .font(.system(size: 18, weight: .medium))
-                    .foregroundStyle(isSelected ? .white : .primary)
+                    .foregroundStyle(.white)
 
                 Spacer()
 
@@ -107,17 +101,16 @@ struct DirectorOptionButton: View {
                 }
             }
             .padding(16)
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(isSelected ? Color.blue : Color.white)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 16)
-                    .strokeBorder(isSelected ? Color.blue : Color.gray.opacity(0.2), lineWidth: isSelected ? 0 : 1)
-            )
-            .shadow(color: .black.opacity(isSelected ? 0.1 : 0.04), radius: isSelected ? 12 : 8, y: isSelected ? 6 : 4)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(DepthButtonStyle(
+            fill: isSelected
+                ? DesignSystem.Colors.primaryButton
+                : DesignSystem.Colors.primaryButton.opacity(0.85),
+            base: isSelected
+                ? DesignSystem.Colors.buttonDepthBase
+                : DesignSystem.Colors.buttonDepthBase.opacity(0.85),
+            cornerRadius: 16
+        ))
         .disabled(isDisabled)
     }
 }

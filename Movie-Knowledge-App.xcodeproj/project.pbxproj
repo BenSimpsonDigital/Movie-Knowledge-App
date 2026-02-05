@@ -7,20 +7,38 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		D88BA78D2F30A46B00657030 /* Lottie in Frameworks */ = {isa = PBXBuildFile; productRef = D88BA78C2F30A46B00657030 /* Lottie */; };
-		D88BA7992F30A65D00657030 /* Contents.json in Resources */ = {isa = PBXBuildFile; fileRef = D88BA7962F30A65C00657030 /* Contents.json */; };
-		D88BA79F2F30A65D00657030 /* popcorn-animation-1.json in Resources */ = {isa = PBXBuildFile; fileRef = D88BA7A02F30A65C00657030 /* popcorn-animation-1.json */; };
+		D88BADC22F32F92500657030 /* InstrumentSerif-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D88BADC12F32F92500657030 /* InstrumentSerif-Regular.ttf */; };
+		D88BADC32F32F92500657030 /* InstrumentSerif-Italic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D88BADC02F32F92500657030 /* InstrumentSerif-Italic.ttf */; };
+		D8D4913E2F3424F100AF5B36 /* Cardo-Italic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D8D4913C2F3424F100AF5B36 /* Cardo-Italic.ttf */; };
+		D8D4913F2F3424F100AF5B36 /* Cardo-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D8D4913D2F3424F100AF5B36 /* Cardo-Regular.ttf */; };
+		D8D491402F3424F100AF5B36 /* Cardo-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D8D4913B2F3424F100AF5B36 /* Cardo-Bold.ttf */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		D88BA7962F30A65C00657030 /* Contents.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Contents.json; sourceTree = "<group>"; };
-		D88BA7A02F30A65C00657030 /* popcorn-animation-1.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "popcorn-animation-1.json"; sourceTree = "<group>"; };
+		D88BADC02F32F92500657030 /* InstrumentSerif-Italic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "InstrumentSerif-Italic.ttf"; sourceTree = "<group>"; };
+		D88BADC12F32F92500657030 /* InstrumentSerif-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "InstrumentSerif-Regular.ttf"; sourceTree = "<group>"; };
 		D8B3F4502F2B2A440052FEA9 /* Movie-Knowledge-App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Movie-Knowledge-App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		D8D4913B2F3424F100AF5B36 /* Cardo-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Cardo-Bold.ttf"; sourceTree = "<group>"; };
+		D8D4913C2F3424F100AF5B36 /* Cardo-Italic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Cardo-Italic.ttf"; sourceTree = "<group>"; };
+		D8D4913D2F3424F100AF5B36 /* Cardo-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Cardo-Regular.ttf"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		D88BADB92F32ED3F00657030 /* Exceptions for "Movie-Knowledge-App" folder in "Movie-Knowledge-App" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = D8B3F44F2F2B2A440052FEA9 /* Movie-Knowledge-App */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		D8B3F4522F2B2A440052FEA9 /* Movie-Knowledge-App */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				D88BADB92F32ED3F00657030 /* Exceptions for "Movie-Knowledge-App" folder in "Movie-Knowledge-App" target */,
+			);
 			path = "Movie-Knowledge-App";
 			sourceTree = "<group>";
 		};
@@ -31,26 +49,20 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				D88BA78D2F30A46B00657030 /* Lottie in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		D88BA7972F30A65C00657030 /* Animations */ = {
-			isa = PBXGroup;
-			children = (
-				D88BA7962F30A65C00657030 /* Contents.json */,
-				D88BA7A02F30A65C00657030 /* popcorn-animation-1.json */,
-			);
-			path = Animations;
-			sourceTree = "<group>";
-		};
 		D8B3F4472F2B2A440052FEA9 = {
 			isa = PBXGroup;
 			children = (
-				D88BA7972F30A65C00657030 /* Animations */,
+				D8D4913B2F3424F100AF5B36 /* Cardo-Bold.ttf */,
+				D8D4913C2F3424F100AF5B36 /* Cardo-Italic.ttf */,
+				D8D4913D2F3424F100AF5B36 /* Cardo-Regular.ttf */,
+				D88BADC02F32F92500657030 /* InstrumentSerif-Italic.ttf */,
+				D88BADC12F32F92500657030 /* InstrumentSerif-Regular.ttf */,
 				D8B3F4522F2B2A440052FEA9 /* Movie-Knowledge-App */,
 				D8B3F4512F2B2A440052FEA9 /* Products */,
 			);
@@ -83,9 +95,6 @@
 				D8B3F4522F2B2A440052FEA9 /* Movie-Knowledge-App */,
 			);
 			name = "Movie-Knowledge-App";
-			packageProductDependencies = (
-				D88BA78C2F30A46B00657030 /* Lottie */,
-			);
 			productName = "Movie-Knowledge-App";
 			productReference = D8B3F4502F2B2A440052FEA9 /* Movie-Knowledge-App.app */;
 			productType = "com.apple.product-type.application";
@@ -114,9 +123,6 @@
 			);
 			mainGroup = D8B3F4472F2B2A440052FEA9;
 			minimizedProjectReferenceProxies = 1;
-			packageReferences = (
-				D88BA78B2F30A46B00657030 /* XCRemoteSwiftPackageReference "lottie-ios" */,
-			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = D8B3F4512F2B2A440052FEA9 /* Products */;
 			projectDirPath = "";
@@ -132,8 +138,11 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				D88BA7992F30A65D00657030 /* Contents.json in Resources */,
-				D88BA79F2F30A65D00657030 /* popcorn-animation-1.json in Resources */,
+				D88BADC22F32F92500657030 /* InstrumentSerif-Regular.ttf in Resources */,
+				D8D4913E2F3424F100AF5B36 /* Cardo-Italic.ttf in Resources */,
+				D8D4913F2F3424F100AF5B36 /* Cardo-Regular.ttf in Resources */,
+				D8D491402F3424F100AF5B36 /* Cardo-Bold.ttf in Resources */,
+				D88BADC32F32F92500657030 /* InstrumentSerif-Italic.ttf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -281,6 +290,7 @@
 				DEVELOPMENT_TEAM = NRYT33FKAS;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Movie-Knowledge-App/Info.plist";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -313,6 +323,7 @@
 				DEVELOPMENT_TEAM = NRYT33FKAS;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Movie-Knowledge-App/Info.plist";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -357,25 +368,6 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
-
-/* Begin XCRemoteSwiftPackageReference section */
-		D88BA78B2F30A46B00657030 /* XCRemoteSwiftPackageReference "lottie-ios" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/airbnb/lottie-ios";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 4.6.0;
-			};
-		};
-/* End XCRemoteSwiftPackageReference section */
-
-/* Begin XCSwiftPackageProductDependency section */
-		D88BA78C2F30A46B00657030 /* Lottie */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = D88BA78B2F30A46B00657030 /* XCRemoteSwiftPackageReference "lottie-ios" */;
-			productName = Lottie;
-		};
-/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = D8B3F4482F2B2A440052FEA9 /* Project object */;
 }

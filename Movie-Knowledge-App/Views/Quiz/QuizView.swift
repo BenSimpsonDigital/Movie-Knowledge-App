@@ -262,13 +262,9 @@ struct QuizView: View {
                 }
             }) {
                 Text(viewModel.currentQuestionIndex < viewModel.totalQuestions - 1 ? "Continue" : "See Results")
-                    .font(DesignSystem.Typography.body(.medium))
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 46)
-                    .background(DesignSystem.Colors.primaryButton)
-                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .depthButtonLabel(verticalPadding: 12)
             }
+            .buttonStyle(DepthButtonStyle(cornerRadius: 10))
         }
         .padding(.horizontal, DesignSystem.Spacing.xl)
         .padding(.top, DesignSystem.Spacing.xl)
@@ -308,14 +304,6 @@ struct RoundedCorner: Shape {
 }
 
 #Preview {
-    let category = CategoryModel(
-        title: "Classic Cinema",
-        subtitle: "Test",
-        colorRed: 0.75,
-        colorGreen: 0.68,
-        colorBlue: 0.58,
-        displayOrder: 0
-    )
     let subCategory = SubCategory(
         title: "Test Lesson",
         descriptionText: "Test",

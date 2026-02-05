@@ -123,15 +123,9 @@ struct NotificationPermissionView: View {
                     onContinue()
                 }) {
                     Text(notificationsEnabled ? "Enable Notifications" : "Continue")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 18)
-                        .background(
-                            RoundedRectangle(cornerRadius: 16)
-                                .fill(DesignSystem.Colors.primaryButton)
-                        )
+                        .depthButtonLabel(font: .system(size: 18, weight: .semibold), verticalPadding: 18)
                 }
+                .buttonStyle(DepthButtonStyle(cornerRadius: 16))
 
                 Button(action: {
                     onSkip()

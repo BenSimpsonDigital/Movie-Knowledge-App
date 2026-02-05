@@ -37,11 +37,17 @@ enum DesignSystem {
         /// Muted teal accent for primary actions
         static let accent = Color(red: 0.35, green: 0.55, blue: 0.50)
 
-        /// Blue-purple accent for tab bar selection
-        static let tabAccent = Color(red: 0.36, green: 0.37, blue: 0.91)
+        /// Charcoal accent for tab bar selection
+        static let tabAccent = textPrimary
 
-        /// Primary button color (matches tab accent purple)
+        /// Primary button color (matches charcoal category buttons)
         static let primaryButton = tabAccent
+
+        /// 3D button base (slightly darker charcoal)
+        static let buttonDepthBase = Color(red: 0.08, green: 0.08, blue: 0.09)
+
+        /// 3D button shadow
+        static let buttonDepthShadow = Color.black.opacity(0.12)
 
         /// Light accent for backgrounds
         static let accentLight = Color(red: 0.92, green: 0.95, blue: 0.94)
@@ -105,6 +111,22 @@ enum DesignSystem {
         static let warningOrange = Color(red: 0.78, green: 0.65, blue: 0.45)
         static let warningOrangeLight = Color(red: 0.97, green: 0.95, blue: 0.92)
 
+        // MARK: Home Screen (Per Spec)
+        /// Pure white background - #FFFFFF
+        static let homeBackground = Color.white
+
+        /// Near black text - #121417
+        static let homeTextPrimary = Color(red: 0.07, green: 0.08, blue: 0.09)
+
+        /// Gray secondary text - #6B7280
+        static let homeTextSecondary = Color(red: 0.42, green: 0.45, blue: 0.50)
+
+        /// Light blue-gray card background - #F7F8FA
+        static let homeCardBackground = Color(red: 0.97, green: 0.97, blue: 0.98)
+
+        /// Light border - #E5E7EB
+        static let homeBorder = Color(red: 0.90, green: 0.91, blue: 0.92)
+
         // MARK: Legacy Compatibility
         /// Gold accent (now uses accent for minimal design)
         static let goldAccent = accent
@@ -126,6 +148,10 @@ enum DesignSystem {
 
         /// Display: 32pt Bold
         static let displaySize: CGFloat = 32
+
+        /// View title: Instrument Serif 42pt Semibold
+        static let viewTitleSize: CGFloat = 42
+        static let viewTitleWeight: Font.Weight = .semibold
 
         /// Title: 28pt Bold
         static let titleSize: CGFloat = 28
@@ -159,6 +185,13 @@ enum DesignSystem {
         // MARK: - Font Helpers
         static func display(_ size: CGFloat = displaySize) -> Font {
             .system(size: size, weight: .bold, design: .default)
+        }
+
+        static func viewTitle(
+            _ size: CGFloat = viewTitleSize,
+            weight: Font.Weight = viewTitleWeight
+        ) -> Font {
+            .custom("InstrumentSerif-Regular", size: size).weight(weight)
         }
 
         static func title(_ weight: Font.Weight = .bold) -> Font {
@@ -339,6 +372,25 @@ enum DesignSystem {
         static func staggered(index: Int, baseDelay: Double = 0.03) -> Animation {
             smooth.delay(Double(index) * baseDelay)
         }
+
+        // MARK: - Category Transition Animations
+
+        /// Hero transition - medium duration with smooth easing for icon/title movement
+        static let heroTransition = Animation.spring(response: 0.5, dampingFraction: 0.88)
+
+        /// Background flood animation - smooth easeOut for color expansion
+        static let backgroundFlood = Animation.easeOut(duration: 0.35)
+
+        /// Content fade animation during transition
+        static let contentFade = Animation.easeOut(duration: 0.2)
+
+        /// Staggered row entrance animation
+        static func staggeredRow(index: Int, baseDelay: Double = 0.05) -> Animation {
+            .spring(response: 0.4, dampingFraction: 0.85).delay(baseDelay * Double(index))
+        }
+
+        /// Reverse transition animation - slightly faster for dismissal
+        static let reverseTransition = Animation.spring(response: 0.45, dampingFraction: 0.9)
     }
 
     // MARK: - XP System
@@ -438,5 +490,112 @@ extension View {
                 RoundedRectangle(cornerRadius: DesignSystem.Effects.radiusMedium, style: .continuous)
                     .strokeBorder(DesignSystem.Colors.borderDefault, lineWidth: DesignSystem.Effects.borderWidth)
             )
+    }
+
+    /// Apply depth button label styling (use with DepthButtonStyle)
+    func depthButtonLabel(
+        font: Font = DesignSystem.Typography.body(.medium),
+        foreground: Color = .white,
+        horizontalPadding: CGFloat = 16,
+        verticalPadding: CGFloat = 14,
+        fullWidth: Bool = true,
+        alignment: Alignment = .center
+    ) -> some View {
+        self
+            .font(font)
+            .foregroundStyle(foreground)
+            .frame(maxWidth: fullWidth ? .infinity : nil, alignment: alignment)
+            .padding(.horizontal, horizontalPadding)
+            .padding(.vertical, verticalPadding)
+    }
+
+    /// Apply topic card styling (Home screen spec: #F7F8FA bg, 16pt radius, no shadow)
+    func topicCard() -> some View {
+        self
+            .background(DesignSystem.Colors.homeCardBackground)
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    /// Apply outline button styling (Home screen spec: text-only with #E5E7EB border)
+    func outlineButton() -> some View {
+        self
+            .font(.system(size: 16, weight: .medium))
+            .foregroundStyle(DesignSystem.Colors.homeTextPrimary)
+            .padding(.horizontal, 20)
+            .padding(.vertical, 12)
+            .overlay(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .stroke(DesignSystem.Colors.homeBorder, lineWidth: 1)
+            )
+    }
+}
+
+// MARK: - Depth Button Style
+
+struct DepthButtonStyle: ButtonStyle {
+    var fill: Color = DesignSystem.Colors.primaryButton
+    var base: Color = DesignSystem.Colors.buttonDepthBase
+    var shadow: Color = DesignSystem.Colors.buttonDepthShadow
+    var cornerRadius: CGFloat = DesignSystem.Effects.buttonCornerRadius
+    var depth: CGFloat = 3
+    var pressedDepth: CGFloat = 1
+    var shadowRadius: CGFloat = 1
+    var pressedScale: CGFloat = 0.98
+    var pressedOverlayOpacity: CGFloat = 0.12
+
+    func makeBody(configuration: Configuration) -> some View {
+        DepthButtonBody(
+            configuration: configuration,
+            fill: fill,
+            base: base,
+            shadow: shadow,
+            cornerRadius: cornerRadius,
+            depth: depth,
+            pressedDepth: pressedDepth,
+            shadowRadius: shadowRadius,
+            pressedScale: pressedScale,
+            pressedOverlayOpacity: pressedOverlayOpacity
+        )
+    }
+}
+
+private struct DepthButtonBody: View {
+    @Environment(\.isEnabled) private var isEnabled
+    let configuration: ButtonStyle.Configuration
+    let fill: Color
+    let base: Color
+    let shadow: Color
+    let cornerRadius: CGFloat
+    let depth: CGFloat
+    let pressedDepth: CGFloat
+    let shadowRadius: CGFloat
+    let pressedScale: CGFloat
+    let pressedOverlayOpacity: CGFloat
+
+    var body: some View {
+        let isPressed = configuration.isPressed
+        let currentDepth = isPressed ? pressedDepth : depth
+        let topColor = isEnabled ? fill : DesignSystem.Colors.disabled
+        let baseColor = isEnabled ? base : DesignSystem.Colors.borderDefault
+        let shadowColor = isEnabled ? shadow : shadow.opacity(0.4)
+
+        configuration.label
+            .background(
+                ZStack {
+                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                        .fill(baseColor)
+                        .offset(y: currentDepth)
+
+                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                        .fill(topColor)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                                .fill(Color.black.opacity(isPressed ? pressedOverlayOpacity : 0))
+                        )
+                }
+            )
+            .shadow(color: shadowColor, radius: shadowRadius, x: 0, y: currentDepth)
+            .scaleEffect(isPressed ? pressedScale : 1.0)
+            .animation(.easeOut(duration: 0.15), value: isPressed)
     }
 }

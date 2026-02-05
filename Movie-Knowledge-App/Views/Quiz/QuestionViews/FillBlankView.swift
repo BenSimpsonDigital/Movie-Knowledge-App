@@ -51,17 +51,9 @@ struct FillBlankView: View {
                 onAnswer(userInput)
             }) {
                 Text("Submit")
-                    .font(DesignSystem.Typography.body(.medium))
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
-                    .background(
-                        userInput.trimmingCharacters(in: .whitespaces).isEmpty
-                            ? DesignSystem.Colors.disabled
-                            : DesignSystem.Colors.accent
-                    )
-                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .depthButtonLabel()
             }
+            .buttonStyle(DepthButtonStyle(cornerRadius: 10))
             .disabled(userInput.trimmingCharacters(in: .whitespaces).isEmpty)
         }
         .onAppear {

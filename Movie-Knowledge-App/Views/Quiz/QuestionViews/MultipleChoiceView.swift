@@ -23,6 +23,7 @@ struct MultipleChoiceView: View {
     var body: some View {
         VStack(spacing: 12) {
             ForEach(allOptions, id: \.self) { option in
+                let isSelected = selectedAnswer == option
                 Button(action: {
                     selectedAnswer = option
                     onAnswer(option)
@@ -30,32 +31,28 @@ struct MultipleChoiceView: View {
                     HStack {
                         Text(option)
                             .font(DesignSystem.Typography.body())
-                            .foregroundStyle(DesignSystem.Colors.textPrimary)
                             .multilineTextAlignment(.leading)
 
                         Spacer()
 
-                        if selectedAnswer == option {
+                        if isSelected {
                             Image(systemName: "checkmark")
                                 .font(.system(size: 14, weight: .medium))
-                                .foregroundStyle(DesignSystem.Colors.accent)
                         }
                     }
+                    .foregroundStyle(.white)
                     .padding(16)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(DesignSystem.Colors.cardBackground)
-                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .strokeBorder(
-                                selectedAnswer == option
-                                    ? DesignSystem.Colors.accent
-                                    : DesignSystem.Colors.borderDefault,
-                                lineWidth: selectedAnswer == option ? 1.5 : 1
-                            )
-                    )
                 }
-                .buttonStyle(PlainButtonStyle())
+                .buttonStyle(DepthButtonStyle(
+                    fill: isSelected
+                        ? DesignSystem.Colors.primaryButton
+                        : DesignSystem.Colors.primaryButton.opacity(0.85),
+                    base: isSelected
+                        ? DesignSystem.Colors.buttonDepthBase
+                        : DesignSystem.Colors.buttonDepthBase.opacity(0.85),
+                    cornerRadius: 10
+                ))
             }
         }
     }

@@ -107,13 +107,9 @@ struct ResultsView: View {
                 VStack(spacing: 12) {
                     Button(action: { dismiss() }) {
                         Text("Continue")
-                            .font(DesignSystem.Typography.body(.medium))
-                            .foregroundStyle(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                            .background(DesignSystem.Colors.primaryButton)
-                            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                            .depthButtonLabel()
                     }
+                    .buttonStyle(DepthButtonStyle(cornerRadius: 10))
 
                     if viewModel.canRetryMistakes {
                         Button(action: {
@@ -122,17 +118,9 @@ struct ResultsView: View {
                             }
                         }) {
                             Text("Retry mistakes (\(viewModel.wrongAnswerChallenges.count))")
-                                .font(DesignSystem.Typography.body(.medium))
-                                .foregroundStyle(DesignSystem.Colors.textSecondary)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 14)
-                                .background(DesignSystem.Colors.cardBackground)
-                                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                        .strokeBorder(DesignSystem.Colors.borderDefault, lineWidth: 1)
-                                )
+                                .depthButtonLabel()
                         }
+                        .buttonStyle(DepthButtonStyle(cornerRadius: 10))
                     }
 
                     Button(action: { viewModel.resetQuiz() }) {

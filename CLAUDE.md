@@ -54,7 +54,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Movie Knowledge App** - A gamified iOS quiz application for learning movie trivia across 12 themed categories including Classic Cinema, Sci-Fi Spectacles, Animated Adventures, and more. Built with SwiftUI and SwiftData, featuring XP progression, streaks, badges, and a linear unlock system.
+**Movie Knowledge App** - A gamified iOS quiz application for learning movie trivia across 9 themed categories including Core Film Knowledge, Directors & Creators, Genres, World Cinema, and more. Built with SwiftUI and SwiftData, featuring XP progression, streaks, badges, a lives-based quiz system, and linear unlock progression.
 
 ## Build & Development Commands
 
@@ -94,19 +94,21 @@ xcodebuild -project "Movie-Knowledge-App.xcodeproj" \
 **Note:** No test target currently configured. To add tests, create a new Unit Testing Bundle target in Xcode.
 
 ### Requirements
-- Xcode 26.2+
+- Xcode 16.2+
 - iOS 17.0+ (SwiftUI + SwiftData)
 - No external dependencies (Apple frameworks only)
+
+**Note:** Lottie animation views exist in code but the Lottie package is not currently configured. Avoid triggering animation code paths until dependencies are resolved.
 
 ## Architecture Overview
 
 ### High-Level Pattern
 
 **MVVM with Service Layer:**
-- **Models**: SwiftData persistence layer (7 data models)
+- **Models**: SwiftData persistence layer (10 data models)
 - **ViewModels**: `@Observable` classes for reactive state (AppState, QuizViewModel)
 - **Views**: SwiftUI declarative UI
-- **Services**: Business logic isolation (Progress, XP, Badges, Streaks)
+- **Services**: Business logic isolation (Progress, XP, Badges, Streaks, DataSeeder)
 
 ### Data Model Hierarchy
 
@@ -121,34 +123,44 @@ CategoryModel
     └── Challenge[]         # Quiz questions
 ```
 
-**7 SwiftData Models:**
+**10 SwiftData Models:**
 1. `UserProfile` - User stats, XP, level, streaks, accuracy
-2. `CategoryModel` - 12 movie categories with color themes
-3. `SubCategory` - Lessons within categories
-4. `Challenge` - Individual quiz questions
-5. `CategoryProgress` - Per-category completion state
-6. `Badge` - Achievement definitions and tracking
-7. `DailyLessonRecord` - Daily participation history
+2. `UserPreferences` - Settings, onboarding state, notifications, daily goals
+3. `CategoryModel` - 9 movie categories with color themes
+4. `SubCategory` - Lessons within categories
+5. `Challenge` - Individual quiz questions
+6. `CategoryProgress` - Per-category completion state
+7. `Badge` - Achievement definitions and tracking
+8. `DailyLessonRecord` - Daily participation history
+9. `Movie` - Movie reference data (title, year, director, cast, trivia)
+10. `Director` - Director reference data (bio, filmography, style traits)
+
+**Note:** `Movie` and `Director` use ID-based relationships (storing UUIDs) instead of direct SwiftData relationships to avoid circular dependencies.
 
 ### Application Flow
 
 ```
 1. App Launch (Movie_Knowledge_AppApp.swift)
-   └─→ Initialize ModelContainer with 7 models
+   └─→ Initialize ModelContainer with 10 models
    └─→ DataSeeder populates initial data if empty
-       (12 categories, 150+ questions)
+       (9 categories with subcategories, structure only - no questions seeded)
 
-2. MainTabView
+2. Onboarding (if !hasCompletedOnboarding)
+   └─→ WelcomeView → InterestPickerView → DailyGoalView → NotificationPermissionView
+   └─→ Sets UserPreferences.hasCompletedOnboarding = true
+
+3. MainTabView
    └─→ Initialize AppState after ModelContext ready
    └─→ Lazy-load services (Progress, XP, Badge, Streak)
    └─→ Present 3-tab interface (Home, Learn, Profile)
 
-3. Quiz Flow
+4. Quiz Flow
    CategoriesView → SubCategoryListView → QuizView → ResultsView
    └─→ Linear progression: complete previous to unlock next
+   └─→ Lives system: 3 lives per quiz, game over at 0
    └─→ XP awards, progress updates, badge checks
 
-4. State Management
+5. State Management
    └─→ AppState (@Observable) injected via @Environment
    └─→ Reactive UI updates without Combine/Publishers
 ```
@@ -191,17 +203,25 @@ Uses `NavigationStack` with environment-based state passing. AppState tracks `ac
 Movie-Knowledge-App/
 ├── Models/
 │   ├── ViewModels/        # AppState.swift, QuizViewModel.swift
-│   ├── SwiftData/         # Persistent data models
-│   └── Enums/             # AppTab, Difficulty, QuestionType
+│   ├── SwiftData/         # 10 persistent data models
+│   └── Enums/             # AppTab, Difficulty, QuestionType (5 types)
 ├── Views/
+│   ├── Root/              # MainTabView.swift
 │   ├── Home/              # Home tab with stats
-│   ├── Categories/        # Tile grid (recently updated from card cycler)
+│   ├── Categories/        # Tile grid + variants (expandable, carousel)
+│   │   └── Components/    # ProgressRing
 │   ├── Quiz/              # Quiz interaction
-│   │   └── QuestionViews/ # FillBlankView, TrueFalseView, MultipleChoiceView
+│   │   ├── QuestionViews/ # MultipleChoice, TrueFalse, FillBlank, PickYear, MatchDirector
+│   │   └── Components/    # LivesIndicator
 │   ├── Profile/           # User profile display
+│   ├── Onboarding/        # 5-step onboarding flow
+│   ├── Search/            # SearchView (not integrated into tabs)
 │   └── Shared/            # Reusable components, animations
-├── Services/              # ProgressService, XPService, StreakService, BadgeService
-├── Utilities/             # HapticManager, DesignSystem constants
+│       ├── Animations/    # BadgeUnlock, Confetti, LevelUp, Lottie
+│       └── Components/    # EmptyState, StreakFlame
+├── Services/              # ProgressService, XPService, StreakService, BadgeService, DataSeeder
+├── Utilities/             # HapticManager, CategoryAnimationMapping
+│   └── Constants/         # DesignSystem.swift
 └── Assets.xcassets/
     ├── outline/           # Heroicon outline assets (default state)
     └── solid/             # Heroicon solid assets (selected state)
@@ -268,13 +288,26 @@ Converts SF Symbol names to Heroicon asset names:
 "sparkles" → "heroicon-sparkles-outline" / "heroicon-sparkles-solid"
 ```
 
-## Quiz Question Types
+## Quiz System
 
-**Three Formats:**
+### Lives-Based Gameplay
+
+QuizViewModel implements a **3-lives failure system**:
+- Start with 3 lives per quiz session
+- Lose 1 life on each incorrect answer
+- Game over when lives reach 0
+- Can retry just the wrong answers
+- Tracked via `remainingLives` property
+
+### Question Types
+
+**Five Formats:**
 
 1. **MultipleChoiceView**: Question + 4 options (1 correct, 3 distractors)
 2. **TrueFalseView**: Statement + True/False buttons
 3. **FillBlankView**: Question + text field input
+4. **PickYearView**: Slider-based year selection (1900-2025 range)
+5. **MatchDirectorView**: Select correct director from options
 
 **All Questions Include:**
 - Difficulty enum: `.easy`, `.medium`, `.hard`
@@ -286,7 +319,7 @@ Converts SF Symbol names to Heroicon asset names:
 ```swift
 Challenge(
     questionText: String,
-    questionType: QuestionType,
+    questionType: QuestionType,  // .multipleChoice, .trueFalse, .fillBlank, .pickYear, .matchDirector
     correctAnswer: String,
     wrongAnswers: [String]?,     // nil for True/False
     explanation: String?,
@@ -339,11 +372,12 @@ Update `Utilities/Constants/DesignSystem.swift` for global design tokens.
 
 ## Important Context
 
-### Current State (Jan 2026)
+### Current State (Feb 2026)
 
-- **Content**: 3 fully-populated categories (Classic Cinema, Sci-Fi, Animated Adventures)
-- **Placeholders**: 9 categories with "Coming Soon" content
-- **UI**: Tile-based grid view (recently redesigned from card cycler)
+- **Categories**: 9 seeded categories with subcategory structure (no Challenge questions seeded)
+- **Onboarding**: Full 5-step flow implemented
+- **UI**: Tile-based grid view with expandable/carousel variants available
+- **Search**: SearchView exists but not integrated into main navigation
 - **Testing**: No unit test target configured (future enhancement)
 
 ### Recent Updates
@@ -361,9 +395,29 @@ Update `Utilities/Constants/DesignSystem.swift` for global design tokens.
 - No offline mode (all data stored locally via SwiftData)
 - No user authentication (single local profile)
 
+### Known Issues
+
+- **Lottie Dependency**: LottieAnimationView exists but Lottie package not configured - will crash if animation code paths execute
+- **Legacy Code**: `CategoryCyclerView.swift`, `CategoryCardView.swift`, and `Category.swift` (old struct) are unused and can be removed
+- **Animation Mapping**: `CategoryAnimationMapping.swift` hardcoded to "popcorn-animation-1" for all categories
+
+## Seeded Categories
+
+The 9 categories defined in `DataSeeder.swift`:
+
+1. **Core Film Knowledge** - Film history, famous films, quotes, box office, awards, cult classics
+2. **Directors and Creators** - Famous directors, indie filmmakers, signature styles
+3. **Genres** - Action, Comedy, Drama, Horror, Sci-Fi, Romance, Thriller, Animation
+4. **World Cinema** - Hollywood, European, Asian, Australian, international films
+5. **Awards and Recognition** - Oscars, Cannes, Golden Globes, BAFTAs, Palme d'Or
+6. **Film Craft and Behind the Scenes** - Cinematography, screenwriting, editing, VFX
+7. **Movie Eras** - Silent era through modern streaming era
+8. **Actors and Performances** - Iconic performances, method actors, on-screen duos
+9. **Franchises and Series** - Star Wars, Marvel, Harry Potter, LOTR, James Bond
+
 ## Additional Resources
 
 - **Visual Design**: [STYLEGUIDE.md](STYLEGUIDE.md) - Typography, colors, spacing, animations
 - **Bundle ID**: `bensimpson-digital.Movie-Knowledge-App`
-- **Deployment Target**: iOS 26.2
+- **Deployment Target**: iOS 17.0+
 - **Platform**: Universal (iPhone + iPad)

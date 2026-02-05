@@ -14,6 +14,8 @@ final class SubCategory {
     var title: String
     var descriptionText: String
     var displayOrder: Int
+    var keyFacts: [String]
+    var estimatedMinutes: Int
 
     // Relationships
     @Relationship var parentCategory: CategoryModel?
@@ -23,12 +25,16 @@ final class SubCategory {
         id: UUID = UUID(),
         title: String,
         descriptionText: String,
-        displayOrder: Int
+        displayOrder: Int,
+        keyFacts: [String] = [],
+        estimatedMinutes: Int = 5
     ) {
         self.id = id
         self.title = title
         self.descriptionText = descriptionText
         self.displayOrder = displayOrder
+        self.keyFacts = keyFacts
+        self.estimatedMinutes = estimatedMinutes
         self.challenges = []
     }
 

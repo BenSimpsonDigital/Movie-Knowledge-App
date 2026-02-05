@@ -113,15 +113,9 @@ struct InterestPickerView: View {
                     onContinue()
                 }) {
                     Text("Continue")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 18)
-                        .background(
-                            RoundedRectangle(cornerRadius: 16)
-                                .fill(canContinue ? DesignSystem.Colors.primaryButton : DesignSystem.Colors.disabled)
-                        )
+                        .depthButtonLabel(font: .system(size: 18, weight: .semibold), verticalPadding: 18)
                 }
+                .buttonStyle(DepthButtonStyle(cornerRadius: 16))
                 .disabled(!canContinue)
             }
             .padding(.horizontal, 24)

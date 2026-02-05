@@ -125,7 +125,7 @@ final class QuizViewModel {
 
     func skipQuestion() {
         // Mark as incorrect and move on
-        if let challenge = currentChallenge {
+        if currentChallenge != nil {
             userAnswers.append("")
             correctAnswers.append(false)
         }
@@ -164,6 +164,14 @@ final class QuizViewModel {
         // Mark sub-category as complete
         if let progressService = appState.progressService {
             progressService.completeSubCategory(subCategory, for: profile)
+        }
+
+        // Update daily focus completion if this matches today's focus
+        let today = Calendar.current.startOfDay(for: Date())
+        if let focusDate = profile.dailyFocusDate,
+           Calendar.current.isDate(focusDate, inSameDayAs: today),
+           profile.dailyFocusSubCategoryId == subCategory.id {
+            profile.dailyFocusCompleted = true
         }
 
         // Check for badges

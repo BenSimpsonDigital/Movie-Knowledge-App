@@ -24,29 +24,24 @@ struct TrueFalseView: View {
                 VStack(spacing: 8) {
                     Image(systemName: "checkmark")
                         .font(.system(size: 24, weight: .medium))
-                        .foregroundStyle(selectedAnswer == "True"
-                            ? DesignSystem.Colors.accent
-                            : DesignSystem.Colors.textTertiary)
+                        .foregroundStyle(.white)
 
                     Text("True")
                         .font(DesignSystem.Typography.body(.medium))
-                        .foregroundStyle(DesignSystem.Colors.textPrimary)
+                        .foregroundStyle(.white)
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 32)
-                .background(DesignSystem.Colors.cardBackground)
-                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .strokeBorder(
-                            selectedAnswer == "True"
-                                ? DesignSystem.Colors.accent
-                                : DesignSystem.Colors.borderDefault,
-                            lineWidth: selectedAnswer == "True" ? 1.5 : 1
-                        )
-                )
             }
-            .buttonStyle(PlainButtonStyle())
+            .buttonStyle(DepthButtonStyle(
+                fill: selectedAnswer == "True"
+                    ? DesignSystem.Colors.primaryButton
+                    : DesignSystem.Colors.primaryButton.opacity(0.85),
+                base: selectedAnswer == "True"
+                    ? DesignSystem.Colors.buttonDepthBase
+                    : DesignSystem.Colors.buttonDepthBase.opacity(0.85),
+                cornerRadius: 12
+            ))
 
             // False button
             Button(action: {
@@ -56,29 +51,24 @@ struct TrueFalseView: View {
                 VStack(spacing: 8) {
                     Image(systemName: "xmark")
                         .font(.system(size: 24, weight: .medium))
-                        .foregroundStyle(selectedAnswer == "False"
-                            ? DesignSystem.Colors.accent
-                            : DesignSystem.Colors.textTertiary)
+                        .foregroundStyle(.white)
 
                     Text("False")
                         .font(DesignSystem.Typography.body(.medium))
-                        .foregroundStyle(DesignSystem.Colors.textPrimary)
+                        .foregroundStyle(.white)
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 32)
-                .background(DesignSystem.Colors.cardBackground)
-                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .strokeBorder(
-                            selectedAnswer == "False"
-                                ? DesignSystem.Colors.accent
-                                : DesignSystem.Colors.borderDefault,
-                            lineWidth: selectedAnswer == "False" ? 1.5 : 1
-                        )
-                )
             }
-            .buttonStyle(PlainButtonStyle())
+            .buttonStyle(DepthButtonStyle(
+                fill: selectedAnswer == "False"
+                    ? DesignSystem.Colors.primaryButton
+                    : DesignSystem.Colors.primaryButton.opacity(0.85),
+                base: selectedAnswer == "False"
+                    ? DesignSystem.Colors.buttonDepthBase
+                    : DesignSystem.Colors.buttonDepthBase.opacity(0.85),
+                cornerRadius: 12
+            ))
         }
     }
 }

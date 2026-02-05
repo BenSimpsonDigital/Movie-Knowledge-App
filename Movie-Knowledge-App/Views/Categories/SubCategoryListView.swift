@@ -13,90 +13,121 @@ struct SubCategoryListView: View {
     @Environment(AppState.self) private var appState
     @Environment(\.modelContext) private var context
 
-    let category: CategoryModel
+    let categoryId: UUID
+    
+    @State private var category: CategoryModel?
+    @State private var subCategories: [SubCategory] = []
 
     private var sortedSubCategories: [SubCategory] {
-        category.subCategories.sorted { $0.displayOrder < $1.displayOrder }
+        subCategories.sorted { $0.displayOrder < $1.displayOrder }
     }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 24) {
-                // Category Hero
-                categoryHero
+        Group {
+            if category != nil {
+                ScrollView {
+                    VStack(spacing: 24) {
+                        // Category Hero
+                        categoryHero
 
-                // Sub-category list
-                VStack(spacing: 12) {
-                    ForEach(sortedSubCategories) { subCategory in
-                        let index = sortedSubCategories.firstIndex(where: { $0.id == subCategory.id }) ?? 0
-                        SubCategoryRow(
-                            subCategory: subCategory,
-                            index: index + 1,
-                            isLocked: isLocked(subCategory),
-                            isCompleted: isCompleted(subCategory)
-                        )
-                        .onTapGesture {
-                            handleTap(on: subCategory)
+                        // Sub-category list
+                        VStack(spacing: 12) {
+                            ForEach(sortedSubCategories) { subCategory in
+                                let index = sortedSubCategories.firstIndex(where: { $0.id == subCategory.id }) ?? 0
+                                SubCategoryRow(
+                                    subCategory: subCategory,
+                                    index: index + 1,
+                                    isLocked: isLocked(subCategory),
+                                    isCompleted: isCompleted(subCategory)
+                                )
+                                .onTapGesture {
+                                    handleTap(on: subCategory)
+                                }
+                            }
                         }
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, DesignSystem.Dimensions.tabSafeBottomPadding)
                     }
                 }
-                .padding(.horizontal, 20)
-                .padding(.bottom, DesignSystem.Dimensions.tabSafeBottomPadding)
+                .navigationBarTitleDisplayMode(.inline)
+                .navigationDestination(isPresented: Binding(
+                    get: { appState.isQuizActive },
+                    set: { if !$0 { appState.endQuiz() } }
+                )) {
+                    if let activeSubCategory = appState.activeSubCategory {
+                        QuizView(
+                            subCategory: activeSubCategory,
+                            appState: appState,
+                            context: context
+                        )
+                        .environment(appState)
+                    }
+                }
+            } else {
+                VStack {
+                    Text("Category not found")
+                        .font(DesignSystem.Typography.body())
+                    Text("Category ID: \(categoryId.uuidString)")
+                        .font(DesignSystem.Typography.caption())
+                        .foregroundStyle(DesignSystem.Colors.textSecondary)
+                }
             }
         }
-        .background(DesignSystem.Colors.screenBackground)
-        .navigationTitle(category.title)
-        .navigationBarTitleDisplayMode(.inline)
-        .navigationDestination(isPresented: Binding(
-            get: { appState.isQuizActive },
-            set: { if !$0 { appState.endQuiz() } }
-        )) {
-            if let activeSubCategory = appState.activeSubCategory {
-                QuizView(
-                    subCategory: activeSubCategory,
-                    appState: appState,
-                    context: context
-                )
-                .environment(appState)
-            }
+        .onAppear {
+            loadCategory()
+        }
+    }
+    
+    private func loadCategory() {
+        let descriptor = FetchDescriptor<CategoryModel>(
+            predicate: #Predicate { $0.id == categoryId }
+        )
+        
+        if let fetchedCategory = try? context.fetch(descriptor).first {
+            category = fetchedCategory
+            subCategories = fetchedCategory.subCategories
         }
     }
 
     // MARK: - Category Hero
     private var categoryHero: some View {
-        VStack(spacing: 12) {
-            // Icon
-            if let iconName = category.iconName {
-                Image(systemName: iconName)
-                    .font(.system(size: 40, weight: .light))
-                    .foregroundStyle(category.accentColor)
-            }
+        Group {
+            if let category = category {
+                VStack(spacing: 12) {
+                    // Icon
+                    if let iconName = category.iconName {
+                        Image(systemName: iconName)
+                            .font(.system(size: 40, weight: .light))
+                            .foregroundStyle(category.accentColor)
+                    }
 
-            // Title
-            Text(category.title)
-                .font(.system(size: 24, weight: .semibold, design: .default))
-                .foregroundStyle(DesignSystem.Colors.textPrimary)
-                .multilineTextAlignment(.center)
+                    // Title
+                    Text(category.title)
+                        .font(.custom("InstrumentSerif-Regular", size: 24).weight(.semibold))
+                        .foregroundStyle(DesignSystem.Colors.textPrimary)
+                        .multilineTextAlignment(.center)
 
-            // Subtitle
-            Text(category.subtitle)
-                .font(DesignSystem.Typography.body())
-                .foregroundStyle(DesignSystem.Colors.textSecondary)
-                .multilineTextAlignment(.center)
+                    // Subtitle
+                    Text(category.subtitle)
+                        .font(DesignSystem.Typography.body())
+                        .foregroundStyle(DesignSystem.Colors.textSecondary)
+                        .multilineTextAlignment(.center)
 
-            // Progress
-            if let profile = appState.userProfile {
-                let progress = profile.categoryProgress.first { $0.categoryId == category.id }
-                let completed = progress?.completedSubCategoryIds.count ?? 0
-                let total = sortedSubCategories.count
+                    // Progress
+                    if let profile = appState.userProfile {
+                        let progress = profile.categoryProgress.first { $0.categoryId == category.id }
+                        let completed = progress?.completedSubCategoryIds.count ?? 0
+                        let total = sortedSubCategories.count
 
-                Text("\(completed)/\(total) completed")
-                    .font(DesignSystem.Typography.caption())
-                    .foregroundStyle(DesignSystem.Colors.textTertiary)
+                        Text("\(completed)/\(total) completed")
+                            .font(DesignSystem.Typography.caption())
+                            .foregroundStyle(DesignSystem.Colors.textTertiary)
+                    }
+                }
+                .padding(.vertical, 24)
+                .padding(.horizontal, 20)
             }
         }
-        .padding(.vertical, 24)
-        .padding(.horizontal, 20)
     }
 
     // MARK: - Helper Methods
@@ -112,7 +143,7 @@ struct SubCategoryListView: View {
     private func isCompleted(_ subCategory: SubCategory) -> Bool {
         guard let profile = appState.userProfile else { return false }
 
-        let progress = profile.categoryProgress.first { $0.categoryId == category.id }
+        let progress = profile.categoryProgress.first { $0.categoryId == categoryId }
         return progress?.completedSubCategoryIds.contains(subCategory.id) ?? false
     }
 
@@ -120,7 +151,24 @@ struct SubCategoryListView: View {
         if isLocked(subCategory) {
             print("Lesson locked")
         } else {
+            addCategoryToLearningList()
+            
+            // Update last played category and subcategory
+            if let category = category {
+                appState.updateLastPlayed(category: category, subCategory: subCategory, context: context)
+            }
+            
             appState.startQuiz(for: subCategory)
+        }
+    }
+
+    private func addCategoryToLearningList() {
+        guard let category = category,
+              let preferences = appState.userPreferences else { return }
+
+        if !preferences.addedCategories.contains(where: { $0.id == category.id }) {
+            preferences.addedCategories.append(category)
+            try? context.save()
         }
     }
 }
@@ -206,7 +254,8 @@ struct SubCategoryRow: View {
     )
 
     return NavigationStack {
-        SubCategoryListView(category: category)
+        SubCategoryListView(categoryId: category.id)
     }
+    .environment(AppState())
     .modelContainer(for: [CategoryModel.self, UserProfile.self])
 }

@@ -15,7 +15,9 @@ struct ContentView: View {
     var body: some View {
         Group {
             if appState.hasCompletedOnboarding {
-                MainTabView()
+                NavigationStack {
+                    CategoriesView()
+                }
             } else {
                 OnboardingContainerView()
             }
