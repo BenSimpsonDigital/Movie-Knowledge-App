@@ -75,8 +75,19 @@ final class CategoryFilterViewModel {
     private func matchesSearch(_ category: CategoryModel) -> Bool {
         guard !searchQuery.isEmpty else { return true }
         let query = searchQuery.lowercased()
-        return category.title.lowercased().contains(query) ||
-               category.subtitle.lowercased().contains(query)
+        if category.title.lowercased().contains(query) ||
+            category.subtitle.lowercased().contains(query) {
+            return true
+        }
+
+        if let metadata = CategoryMetadata.forCategory(title: category.title) {
+            let metadataText = metadata.highlights.joined(separator: " ").lowercased()
+            if metadataText.contains(query) {
+                return true
+            }
+        }
+
+        return false
     }
 
     private func matchesCompletionStatus(

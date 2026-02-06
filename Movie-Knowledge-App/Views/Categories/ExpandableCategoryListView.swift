@@ -15,49 +15,45 @@ struct ExpandableCategoryListView: View {
     @Query(sort: \CategoryModel.displayOrder) private var categories: [CategoryModel]
 
     @State private var filterViewModel = CategoryFilterViewModel()
-    @State private var selectedCategoryId: UUID? = nil
-    @State private var expandedCategoryId: UUID? = nil
+    @State private var selectedCategory: SelectedCategory?
+    @State private var previewCategory: CategoryModel?
+    @State private var dailyFocus: DailyFocus?
     @State private var isSearchExpanded = false
     @State private var isProfilePresented = false
     @FocusState private var isSearchFocused: Bool
-
-    // MARK: - Computed Properties
 
     private var filteredCategories: [CategoryModel] {
         let progress = appState.userProfile?.categoryProgress ?? []
         return filterViewModel.filteredCategories(from: categories, categoryProgress: progress)
     }
-    
+
     private var categoryOfTheDay: CategoryModel? {
         guard !filteredCategories.isEmpty else { return nil }
         let dayIndex = Calendar.current.component(.day, from: Date()) % filteredCategories.count
         return filteredCategories[dayIndex]
     }
-    
+
+    private var featuredCategoryId: UUID? {
+        isDiscoveryMode ? categoryOfTheDay?.id : nil
+    }
+
     private var continueCategory: CategoryModel? {
-        // Priority 1: Last played category
         if let lastPlayed = appState.lastPlayedCategory {
             return lastPlayed
         }
-        // Priority 2: Suggested category ("The Essentials")
-        return filteredCategories.first { $0.title == "The Essentials" }
-            ?? filteredCategories.first
+        return categories.first { $0.title == "The Essentials" } ?? categories.first
     }
-    
-    private var isLastPlayed: Bool {
-        appState.lastPlayedCategory != nil
-    }
-    
+
     private var addedCategories: [CategoryModel] {
         appState.userPreferences?.addedCategories ?? []
     }
 
-    private var filterAnimation: Animation {
-        reduceMotion ? .easeInOut(duration: 0.1) : DesignSystem.Animations.smooth
+    private var isDiscoveryMode: Bool {
+        !filterViewModel.hasActiveFilters
     }
 
     private var searchAnimation: Animation {
-        reduceMotion ? .easeInOut(duration: 0.1) : .easeInOut(duration: 0.35)
+        reduceMotion ? .easeInOut(duration: 0.1) : .easeInOut(duration: 0.25)
     }
 
     private var searchTransition: AnyTransition {
@@ -65,136 +61,32 @@ struct ExpandableCategoryListView: View {
             return .opacity
         }
         return .asymmetric(
-            insertion: .opacity.combined(with: .offset(y: 18)),
-            removal: .opacity.combined(with: .offset(y: -18))
+            insertion: .opacity.combined(with: .offset(y: 12)),
+            removal: .opacity.combined(with: .offset(y: -12))
         )
     }
 
-    private var userName: String {
-        appState.userProfile?.username ?? "Ben"
+    private var isPreviewPresented: Binding<Bool> {
+        Binding(
+            get: { previewCategory != nil },
+            set: { isPresented in
+                if !isPresented {
+                    previewCategory = nil
+                }
+            }
+        )
     }
-
-    private var userLevelText: String {
-        let level = appState.userProfile?.currentLevel ?? 1
-        let title = getUserTitle(for: level)
-        return "Lvl \(level) • \(title)"
-    }
-
-    private var userStreak: Int {
-        appState.userProfile?.currentStreak ?? 0
-    }
-
-    private var streakBadge: some View {
-        HStack(spacing: 6) {
-            Image(systemName: "flame.fill")
-                .font(.system(size: 12, weight: .semibold))
-            Text("\(userStreak)")
-                .font(.system(size: 12, weight: .semibold))
-        }
-        .foregroundStyle(Color.white)
-        .padding(.horizontal, 10)
-        .padding(.vertical, 6)
-        .background(Color.white.opacity(0.2))
-        .clipShape(Capsule())
-        .accessibilityLabel("Streak \(userStreak) days")
-    }
-    
-    private func getUserTitle(for level: Int) -> String {
-        switch level {
-        case 1...4:
-            return "Casual Viewer"
-        case 5...9:
-            return "Film Enthusiast"
-        case 10...14:
-            return "Cinema Fan"
-        case 15...19:
-            return "Ben"
-        case 20...29:
-            return "Film Aficionado"
-        case 30...39:
-            return "Cinema Connoisseur"
-        case 40...49:
-            return "Screen Scholar"
-        case 50...69:
-            return "Film Historian"
-        case 70...99:
-            return "Cinema Master"
-        case 100...:
-            return "Film Legend"
-        default:
-            return "Casual Viewer"
-        }
-    }
-
-    // MARK: - First-Time User Detection
-
-    private var isFirstTimeUser: Bool {
-        (appState.userProfile?.totalQuestionsAnswered ?? 0) == 0
-    }
-
-    // MARK: - Overall Progress Calculation
-
-    private func categoryProgress(for category: CategoryModel) -> Double {
-        guard let profile = appState.userProfile else { return 0 }
-        let total = category.subCategories.count
-        guard total > 0 else { return 0 }
-        
-        let progress = profile.categoryProgress.first { $0.categoryId == category.id }
-        let completed = progress?.completedCount ?? 0
-        
-        return Double(completed) / Double(total)
-    }
-
-    private func completedSubCategoriesCount(for category: CategoryModel) -> Int {
-        guard let profile = appState.userProfile else { return 0 }
-        let progress = profile.categoryProgress.first { $0.categoryId == category.id }
-        return progress?.completedCount ?? 0
-    }
-
-    private func totalSubCategoriesCount(for category: CategoryModel) -> Int {
-        return category.subCategories.count
-    }
-
-    private var welcomeGreeting: String {
-        isFirstTimeUser ? "Welcome, \(userName)!" : "Welcome back, \(userName)!"
-    }
-
-    private var welcomeMessage: String {
-        if isFirstTimeUser {
-            return "Let's start with your first category"
-        } else if let lastSubCategory = appState.lastPlayedSubCategory {
-            return "Continue: \(lastSubCategory.title)"
-        } else {
-            return "Pick up where you left off"
-        }
-    }
-
-    private var progressBarColor: Color {
-        appState.lastPlayedCategory?.accentColor ?? DesignSystem.Colors.accent
-    }
-
-    // MARK: - Body
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            // Background
+        ZStack {
             DesignSystem.Colors.screenBackground
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
                 headerBar
 
-                // Content
                 if filteredCategories.isEmpty {
-                    NoFilterResultsView(
-                        searchQuery: filterViewModel.searchQuery,
-                        hasFilters: filterViewModel.hasActiveFilters,
-                        onClearFilters: {
-                            withAnimation(filterAnimation) {
-                                filterViewModel.clearEverything()
-                            }
-                        }
-                    )
+                    emptyResultsContent
                 } else {
                     categoryList
                 }
@@ -203,30 +95,56 @@ struct ExpandableCategoryListView: View {
         .sheet(isPresented: $filterViewModel.isFilterSheetPresented) {
             CategoryFilterSheet(viewModel: filterViewModel)
         }
+        .sheet(isPresented: isPreviewPresented) {
+            if let previewCategory {
+                CategoryPreviewSheet(
+                    category: previewCategory,
+                    progress: getCategoryProgress(for: previewCategory),
+                    onStart: {
+                        startQuickLesson(for: previewCategory)
+                    },
+                    onOpenCategory: {
+                        navigateToCategory(previewCategory)
+                    }
+                )
+            }
+        }
         .navigationDestination(isPresented: $isProfilePresented) {
             ProfileView()
                 .environment(appState)
         }
-        .navigationDestination(item: $selectedCategoryId) { categoryId in
-            SubCategoryListView(categoryId: categoryId)
+        .navigationDestination(item: $selectedCategory) { destination in
+            SubCategoryListView(categoryId: destination.id)
                 .environment(appState)
+        }
+        .navigationDestination(isPresented: Binding(
+            get: { appState.isQuizActive },
+            set: { if !$0 { appState.endQuiz() } }
+        )) {
+            if let activeSubCategory = appState.activeSubCategory {
+                QuizView(
+                    subCategory: activeSubCategory,
+                    appState: appState,
+                    context: context
+                )
+                .environment(appState)
+            }
         }
         .onAppear {
             filterViewModel.configure(
                 preferences: appState.userPreferences,
                 profile: appState.userProfile
             )
+            loadDailyFocus()
         }
-        .onChange(of: filteredCategories.map(\.id)) { _, newValue in
-            if let expandedCategoryId, !newValue.contains(expandedCategoryId) {
-                withAnimation(DesignSystem.Animations.snappy) {
-                    self.expandedCategoryId = nil
-                }
+        .onChange(of: appState.isQuizActive) { _, isActive in
+            if !isActive {
+                loadDailyFocus()
             }
         }
     }
 
-    // MARK: - Header Bar
+    // MARK: - Header
 
     private var headerBar: some View {
         ZStack(alignment: .leading) {
@@ -235,7 +153,10 @@ struct ExpandableCategoryListView: View {
                     HStack(spacing: DesignSystem.Spacing.sm) {
                         Circle()
                             .fill(DesignSystem.Colors.surfaceSecondary)
-                            .frame(width: DesignSystem.Dimensions.avatarSmall, height: DesignSystem.Dimensions.avatarSmall)
+                            .frame(
+                                width: DesignSystem.Dimensions.avatarSmall,
+                                height: DesignSystem.Dimensions.avatarSmall
+                            )
                             .overlay {
                                 Image(systemName: "person.fill")
                                     .font(.system(size: 16, weight: .medium))
@@ -244,12 +165,12 @@ struct ExpandableCategoryListView: View {
 
                         VStack(alignment: .leading, spacing: 1) {
                             Text("Level \(appState.userProfile?.currentLevel ?? 1)")
-                                .font(.system(size: 15, weight: .medium))
+                                .font(DesignSystem.Typography.body(.medium))
                                 .foregroundStyle(DesignSystem.Colors.textPrimary)
                                 .lineLimit(1)
-                            
-                            Text(getUserTitle(for: appState.userProfile?.currentLevel ?? 1))
-                                .font(.system(size: 13, weight: .regular))
+
+                            Text(userTitle(for: appState.userProfile?.currentLevel ?? 1))
+                                .font(DesignSystem.Typography.caption())
                                 .foregroundStyle(DesignSystem.Colors.textSecondary)
                                 .lineLimit(1)
                         }
@@ -259,8 +180,8 @@ struct ExpandableCategoryListView: View {
 
                 Spacer()
 
-                HStack(spacing: 12) {
-                    if !isSearchExpanded {
+                if !isSearchExpanded {
+                    HStack(spacing: DesignSystem.Spacing.sm) {
                         HeaderIconButton(systemName: "magnifyingglass") {
                             withAnimation(searchAnimation) {
                                 isSearchExpanded = true
@@ -295,394 +216,238 @@ struct ExpandableCategoryListView: View {
         .padding(.bottom, DesignSystem.Spacing.sm)
     }
 
-    // MARK: - Category List
+    // MARK: - Main Content
 
     private var categoryList: some View {
-        ScrollViewReader { proxy in
-            ZStack {
-                ScrollView {
-                    LazyVStack(spacing: 28) {
-                        // Welcome Section
-                        if let continueCategory {
-                            welcomeSection(category: continueCategory)
-                                .padding(.top, 16)
-                        }
-
-                        if !addedCategories.isEmpty {
-                            addedCategoriesSection
-                        }
-                        
-                        // All Categories Section
-                        sectionHeader(title: "All Categories")
-                            .padding(.bottom, -8)
-                        
-                        VStack(spacing: 16) {
-                            // Today's Pick - Featured Category
-                            if let categoryOfTheDay {
-                                FeaturedCategoryTile(
-                                    category: categoryOfTheDay,
-                                    onTap: { navigateToCategory(categoryOfTheDay) }
-                                )
-                            }
-                            
-                            ForEach(Array(filteredCategories.enumerated()), id: \.element.id) { index, category in
-                                ExpandableCategoryTile(
-                                    category: category,
-                                    progress: getCategoryProgress(for: category),
-                                    isExpanded: category.id == expandedCategoryId,
-                                    isOtherExpanded: expandedCategoryId != nil && category.id != expandedCategoryId,
-                                    onTap: { 
-                                        isSearchFocused = false
-                                        handleTileTap(category, proxy: proxy)
-                                    },
-                                    onContinue: {
-                                        navigateToCategory(category)
-                                        expandedCategoryId = nil
-                                    }
-                                )
-                                .id(category.id)
-                                .zIndex(category.id == expandedCategoryId ? 100 : 0)
-                                .transition(categoryTransition)
-                                .animation(
-                                    reduceMotion
-                                        ? .easeInOut(duration: 0.1)
-                                        : DesignSystem.Animations.staggered(index: index, baseDelay: 0.03),
-                                    value: filteredCategories.map(\.id)
-                                )
-                            }
-                            
-                            // More Coming Soon tile
-                            moreComingSoonTile
-                                .padding(.top, -8)
-                        }
-                    }
-                    .padding(.horizontal, DesignSystem.Spacing.xl)
-                    .padding(.top, 4)
-                    .padding(.bottom, 60)
-                }
-                .onTapGesture {
-                    isSearchFocused = false
-                    if expandedCategoryId != nil {
-                        withAnimation(DesignSystem.Animations.smooth) {
-                            expandedCategoryId = nil
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    // MARK: - More Coming Soon Tile
-    
-    private var moreComingSoonTile: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 16) {
-                // Icon container
-                ZStack {
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    DesignSystem.Colors.textSecondary.opacity(0.15),
-                                    DesignSystem.Colors.textSecondary.opacity(0.08)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .frame(width: 48, height: 48)
-
-                    Image(systemName: "ellipsis")
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(width: 24, height: 24)
-                        .foregroundStyle(DesignSystem.Colors.textSecondary)
-                }
-
-                // Title
-                Text("More Coming Soon")
-                    .font(.custom("InstrumentSerif-Regular", size: 21).weight(.semibold))
-                    .foregroundStyle(DesignSystem.Colors.textSecondary)
-                    .lineLimit(1)
-
-                Spacer()
-            }
-            .padding(.vertical, 16)
-            .padding(.horizontal, 20)
-        }
-        .frame(maxWidth: .infinity)
-        .background(DesignSystem.Colors.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Effects.radiusLarge, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: DesignSystem.Effects.radiusLarge, style: .continuous)
-                .strokeBorder(
-                    DesignSystem.Colors.borderDefault,
-                    lineWidth: DesignSystem.Effects.borderWidth
+        ScrollView {
+            LazyVStack(spacing: DesignSystem.Spacing.lg) {
+                DailyFocusCard(
+                    focus: dailyFocus,
+                    onStart: startTodaySession
                 )
-                .opacity(0.5)
-        )
-        .opacity(0.6)
-    }
+                .padding(.top, DesignSystem.Spacing.xs)
 
-    // MARK: - In Progress Section
+                if isDiscoveryMode, let continueCategory {
+                    continueLearningCard(category: continueCategory)
+                }
 
-    private var addedCategoriesSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack {
-                Text("In Progress")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(DesignSystem.Colors.textPrimary)
+                if isDiscoveryMode, !addedCategories.isEmpty {
+                    addedCategoriesSection
+                }
+
+                sectionHeader(title: isDiscoveryMode ? "All Categories" : "Matching Categories")
+
+                ForEach(filteredCategories, id: \.id) { category in
+                    ExpandableCategoryTile(
+                        category: category,
+                        progress: getCategoryProgress(for: category),
+                        isFeatured: featuredCategoryId == category.id,
+                        onTap: {
+                            isSearchFocused = false
+                            navigateToCategory(category)
+                        },
+                        onInfoTap: {
+                            isSearchFocused = false
+                            previewCategory = category
+                            HapticManager.shared.light()
+                        }
+                    )
+                }
             }
             .padding(.horizontal, DesignSystem.Spacing.xl)
+            .padding(.bottom, 56)
+        }
+        .onTapGesture {
+            isSearchFocused = false
+        }
+    }
 
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
-                    ForEach(addedCategories, id: \.id) { category in
-                        inProgressCategoryCard(category: category)
-                    }
-                }
-                .padding(.horizontal, DesignSystem.Spacing.xl)
-                .padding(.vertical, 2)
-            }
-        }
-        .padding(.horizontal, -DesignSystem.Spacing.xl)
-    }
-    
-    private func inProgressCategoryCard(category: CategoryModel) -> some View {
-        Button(action: {
-            HapticManager.shared.light()
-            navigateToCategory(category)
-        }) {
-            VStack(alignment: .leading, spacing: 0) {
-                // Header with icon and remove button
-                HStack(spacing: 0) {
-                    // Category icon
-                    if let iconName = category.iconName {
-                        ZStack {
-                            Circle()
-                                .fill(category.accentColor.opacity(0.15))
-                                .frame(width: 40, height: 40)
-                            
-                            Image(systemName: iconName)
-                                .font(.system(size: 18, weight: .medium))
-                                .foregroundStyle(category.accentColor)
+    private var emptyResultsContent: some View {
+        ScrollView {
+            VStack(spacing: DesignSystem.Spacing.lg) {
+                DailyFocusCard(
+                    focus: dailyFocus,
+                    onStart: startTodaySession
+                )
+                .padding(.top, DesignSystem.Spacing.xs)
+
+                NoFilterResultsView(
+                    searchQuery: filterViewModel.searchQuery,
+                    hasFilters: filterViewModel.hasActiveFilters,
+                    onClearFilters: {
+                        withAnimation(reduceMotion ? .none : DesignSystem.Animations.smooth) {
+                            filterViewModel.clearEverything()
                         }
                     }
-                    
-                    Spacer()
-                    
-                    // Remove button
-                    Button(action: {
-                        HapticManager.shared.light()
-                        toggleAddedCategory(category)
-                    }) {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 9, weight: .semibold))
-                            .foregroundStyle(DesignSystem.Colors.textTertiary)
-                            .frame(width: 20, height: 20)
-                            .background(DesignSystem.Colors.surfaceSecondary)
-                            .clipShape(Circle())
-                    }
-                    .buttonStyle(.plain)
-                }
-                .padding(.horizontal, 16)
-                .padding(.top, 16)
-                
-                Spacer()
-                
-                // Category info
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(category.title)
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(DesignSystem.Colors.textPrimary)
-                        .lineLimit(2)
-                        .multilineTextAlignment(.leading)
-                    
-                    let progress = getCategoryProgress(for: category)
-                    let percentage = Int(progress * 100)
-                    
-                    HStack(spacing: 6) {
-                        // Progress bar
-                        GeometryReader { geo in
-                            ZStack(alignment: .leading) {
-                                RoundedRectangle(cornerRadius: 2)
-                                    .fill(DesignSystem.Colors.surfaceSecondary)
-                                    .frame(height: 4)
-                                
-                                RoundedRectangle(cornerRadius: 2)
-                                    .fill(category.accentColor)
-                                    .frame(width: max(0, geo.size.width * progress), height: 4)
-                            }
-                        }
-                        .frame(height: 4)
-                        
-                        Text("\(percentage)%")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundStyle(DesignSystem.Colors.textSecondary)
-                            .frame(minWidth: 32, alignment: .trailing)
-                    }
-                }
-                .padding(.horizontal, 16)
-                .padding(.bottom, 16)
+                )
+                .frame(minHeight: 320)
             }
-            .frame(width: 180, height: 140)
-            .background(DesignSystem.Colors.cardBackground)
-            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .strokeBorder(DesignSystem.Colors.borderDefault, lineWidth: 1)
-            )
-            .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 2)
+            .padding(.horizontal, DesignSystem.Spacing.xl)
+            .padding(.bottom, 56)
         }
-        .buttonStyle(.plain)
     }
-    
-    // MARK: - Welcome Section
-    
-    private func welcomeSection(category: CategoryModel) -> some View {
+
+    // MARK: - Continue Card
+
+    private func continueLearningCard(category: CategoryModel) -> some View {
         Button(action: {
             HapticManager.shared.medium()
             navigateToCategory(category)
         }) {
-            ZStack(alignment: .topTrailing) {
-                // Background: Dynamic gradient based on category color
-                LinearGradient(
-                    colors: [
-                        category.accentColor.opacity(0.85),
-                        category.accentColor.opacity(0.70)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .saturation(0.6)
-                
-                // Abstract decorative shape (film reel inspired)
-                GeometryReader { geometry in
-                    Circle()
-                        .fill(Color.white.opacity(0.15))
-                        .frame(width: geometry.size.height * 1.4, height: geometry.size.height * 1.4)
-                        .offset(x: geometry.size.width * 0.65, y: -geometry.size.height * 0.2)
-                    
-                    Circle()
-                        .fill(Color.white.opacity(0.1))
-                        .frame(width: geometry.size.height * 1.0, height: geometry.size.height * 1.0)
-                        .offset(x: geometry.size.width * 0.75, y: geometry.size.height * 0.3)
-                }
-                
-                // Content
-                VStack(alignment: .leading, spacing: 12) {
-                    // Greeting
-                    Text(welcomeGreeting)
-                        .font(.custom("InstrumentSerif-Regular", size: 30))
-                        .foregroundStyle(Color.white)
-                        .lineLimit(1)
-                    
-                    // Contextual message
-                Text(welcomeMessage)
-                    .font(.system(size: 15, weight: .regular))
-                    .foregroundStyle(Color.white.opacity(0.85))
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
+                Text("CONTINUE LEARNING")
+                    .font(DesignSystem.Typography.caption(.medium))
+                    .foregroundStyle(category.accentColor)
+                    .tracking(0.5)
+
+                Text(category.title)
+                    .font(DesignSystem.Typography.heading())
+                    .foregroundStyle(DesignSystem.Colors.textPrimary)
                     .lineLimit(2)
-                    .multilineTextAlignment(.leading)
 
-                Spacer()
+                Text("Pick up where you left off")
+                    .font(DesignSystem.Typography.body())
+                    .foregroundStyle(DesignSystem.Colors.textSecondary)
+                    .lineLimit(1)
 
-                // Progress section
-                    VStack(alignment: .leading, spacing: 8) {
-                        let progress = categoryProgress(for: category)
-                        let completed = completedSubCategoriesCount(for: category)
-                        let total = totalSubCategoriesCount(for: category)
-                        
-                        // Progress bar
-                        GeometryReader { geo in
-                            ZStack(alignment: .leading) {
-                                // Background track
-                                RoundedRectangle(cornerRadius: 4)
-                                    .fill(Color.white.opacity(0.25))
-                                    .frame(height: 8)
-                                
-                                // Progress fill
-                                RoundedRectangle(cornerRadius: 4)
-                                    .fill(Color.white)
-                                    .frame(width: max(0, geo.size.width * progress), height: 8)
-                                    .animation(.easeInOut(duration: 0.5), value: progress)
-                            }
-                        }
-                        .frame(height: 8)
-                        
-                        // Progress label with arrow
-                        HStack {
-                            Text("\(completed) of \(total) lessons")
-                                .font(.system(size: 13, weight: .medium))
-                                .foregroundStyle(Color.white.opacity(0.85))
-                            
-                            Spacer()
-                            
-                            Image(systemName: "arrow.right")
-                                .font(.system(size: 16, weight: .medium))
-                                .foregroundStyle(Color.white.opacity(0.9))
-                        }
-                    }
+                HStack(spacing: DesignSystem.Spacing.xs) {
+                    Text("Open category")
+                        .font(DesignSystem.Typography.body(.medium))
+                        .foregroundStyle(category.accentColor)
+
+                    Image(systemName: "arrow.right")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(category.accentColor)
                 }
-                .padding(16)
-
-                streakBadge
-                    .padding(14)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .frame(height: 175)
+            .padding(DesignSystem.Spacing.xl)
+            .background(DesignSystem.Colors.cardBackground)
             .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Effects.radiusLarge, style: .continuous))
-            .shadow(color: Color.black.opacity(0.15), radius: 12, x: 0, y: 6)
+            .overlay(
+                RoundedRectangle(cornerRadius: DesignSystem.Effects.radiusLarge, style: .continuous)
+                    .strokeBorder(DesignSystem.Colors.borderDefault, lineWidth: DesignSystem.Effects.borderWidth)
+            )
+            .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 3)
         }
         .buttonStyle(.plain)
     }
 
+    // MARK: - In Progress
+
+    private var addedCategoriesSection: some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
+            Text("In Progress")
+                .font(DesignSystem.Typography.body(.semibold))
+                .foregroundStyle(DesignSystem.Colors.textPrimary)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: DesignSystem.Spacing.sm) {
+                    ForEach(addedCategories, id: \.id) { category in
+                        inProgressCategoryCard(category: category)
+                    }
+                }
+                .padding(.vertical, 2)
+            }
+        }
+    }
+
+    private func inProgressCategoryCard(category: CategoryModel) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: 0) {
+                Circle()
+                    .fill(category.accentColor.opacity(0.15))
+                    .frame(width: 38, height: 38)
+                    .overlay {
+                        Image(systemName: category.iconName ?? "film")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundStyle(category.accentColor)
+                    }
+
+                Spacer()
+
+                Button(action: {
+                    HapticManager.shared.light()
+                    toggleAddedCategory(category)
+                }) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundStyle(DesignSystem.Colors.textTertiary)
+                        .frame(width: 22, height: 22)
+                        .background(DesignSystem.Colors.surfaceSecondary)
+                        .clipShape(Circle())
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal, DesignSystem.Spacing.md)
+            .padding(.top, DesignSystem.Spacing.md)
+
+            Spacer()
+
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.xs) {
+                Text(category.title)
+                    .font(DesignSystem.Typography.body(.medium))
+                    .foregroundStyle(DesignSystem.Colors.textPrimary)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+
+                let progress = getCategoryProgress(for: category)
+                let percentage = Int(progress * 100)
+
+                HStack(spacing: DesignSystem.Spacing.xs) {
+                    GeometryReader { geo in
+                        ZStack(alignment: .leading) {
+                            RoundedRectangle(cornerRadius: 2)
+                                .fill(DesignSystem.Colors.surfaceSecondary)
+                                .frame(height: 4)
+
+                            RoundedRectangle(cornerRadius: 2)
+                                .fill(category.accentColor)
+                                .frame(width: max(0, geo.size.width * progress), height: 4)
+                        }
+                    }
+                    .frame(height: 4)
+
+                    Text("\(percentage)%")
+                        .font(DesignSystem.Typography.caption(.medium))
+                        .foregroundStyle(DesignSystem.Colors.textSecondary)
+                        .frame(minWidth: 34, alignment: .trailing)
+                }
+            }
+            .padding(.horizontal, DesignSystem.Spacing.md)
+            .padding(.bottom, DesignSystem.Spacing.md)
+        }
+        .frame(width: 180, height: 136)
+        .background(DesignSystem.Colors.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Effects.radiusMedium, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignSystem.Effects.radiusMedium, style: .continuous)
+                .strokeBorder(DesignSystem.Colors.borderDefault, lineWidth: DesignSystem.Effects.borderWidth)
+        )
+        .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 2)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            HapticManager.shared.light()
+            navigateToCategory(category)
+        }
+    }
+
     // MARK: - Section Header
-    
+
     private func sectionHeader(title: String) -> some View {
         HStack {
             Text(title)
-                .font(.system(size: 16, weight: .semibold))
+                .font(DesignSystem.Typography.body(.semibold))
                 .foregroundStyle(DesignSystem.Colors.textPrimary)
             Spacer()
         }
     }
 
-    // MARK: - Transition
-
-    private var categoryTransition: AnyTransition {
-        if reduceMotion {
-            return .opacity
-        }
-        return .asymmetric(
-            insertion: .opacity.combined(with: .move(edge: .top)),
-            removal: .opacity.combined(with: .offset(y: 20))
-        )
-    }
-
     // MARK: - Actions
-
-    private func handleTileTap(_ category: CategoryModel, proxy: ScrollViewProxy) {
-        HapticManager.shared.medium()
-        
-        let isExpanding = expandedCategoryId != category.id
-        
-        withAnimation(DesignSystem.Animations.smooth) {
-            expandedCategoryId = isExpanding ? category.id : nil
-        }
-        
-        // Scroll to make tile visible only if it will be cut off after expansion
-        if isExpanding {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                withAnimation(.easeInOut(duration: 0.35)) {
-                    proxy.scrollTo(category.id, anchor: .center)
-                }
-            }
-        }
-    }
 
     private func navigateToCategory(_ category: CategoryModel) {
         HapticManager.shared.medium()
-        selectedCategoryId = category.id
+        selectedCategory = SelectedCategory(id: category.id)
     }
 
     private func collapseSearch() {
@@ -694,29 +459,106 @@ struct ExpandableCategoryListView: View {
 
     private func toggleAddedCategory(_ category: CategoryModel) {
         guard let preferences = appState.userPreferences else { return }
-
         if let index = preferences.addedCategories.firstIndex(where: { $0.id == category.id }) {
             preferences.addedCategories.remove(at: index)
             try? context.save()
         }
     }
 
-    // MARK: - Progress Calculation
+    private func startTodaySession() {
+        guard let focus = dailyFocus else { return }
+        guard !focus.isCompleted && !focus.isComingSoon else { return }
+
+        HapticManager.shared.medium()
+        appState.updateLastPlayed(category: focus.category, subCategory: focus.subCategory, context: context)
+        appState.startQuiz(for: focus.subCategory)
+    }
+
+    private func startQuickLesson(for category: CategoryModel) {
+        guard let subCategory = nextSubCategoryToStart(in: category) else {
+            navigateToCategory(category)
+            return
+        }
+
+        HapticManager.shared.medium()
+        appState.updateLastPlayed(category: category, subCategory: subCategory, context: context)
+        appState.startQuiz(for: subCategory)
+    }
+
+    private func nextSubCategoryToStart(in category: CategoryModel) -> SubCategory? {
+        let ordered = category.subCategories.sorted { $0.displayOrder < $1.displayOrder }
+        guard let profile = appState.userProfile else { return ordered.first }
+
+        let completedIds = Set(
+            profile.categoryProgress
+                .first(where: { $0.categoryId == category.id })?
+                .completedSubCategoryIds ?? []
+        )
+
+        if let progressService = appState.progressService {
+            if let nextUnlockedIncomplete = ordered.first(where: {
+                !completedIds.contains($0.id) && progressService.isSubCategoryUnlocked($0, for: profile)
+            }) {
+                return nextUnlockedIncomplete
+            }
+
+            if let firstUnlocked = ordered.first(where: {
+                progressService.isSubCategoryUnlocked($0, for: profile)
+            }) {
+                return firstUnlocked
+            }
+        }
+
+        if let nextIncomplete = ordered.first(where: { !completedIds.contains($0.id) }) {
+            return nextIncomplete
+        }
+
+        return ordered.first
+    }
 
     private func getCategoryProgress(for category: CategoryModel) -> Double {
         guard let profile = appState.userProfile else { return 0 }
-
-        if let progress = profile.categoryProgress.first(where: { $0.categoryId == category.id }) {
-            let totalSubCategories = category.subCategories.count
-            guard totalSubCategories > 0 else { return 0 }
-            return Double(progress.completedCount) / Double(totalSubCategories)
+        guard let progress = profile.categoryProgress.first(where: { $0.categoryId == category.id }) else {
+            return 0
         }
-        return 0
+
+        let totalSubCategories = category.subCategories.count
+        guard totalSubCategories > 0 else { return 0 }
+        return Double(progress.completedCount) / Double(totalSubCategories)
     }
+
+    private func loadDailyFocus() {
+        guard let profile = appState.userProfile else {
+            dailyFocus = nil
+            return
+        }
+
+        let focusService = DailyFocusService(context: context)
+        dailyFocus = focusService.getTodayFocus(for: profile)
+    }
+
+    private func userTitle(for level: Int) -> String {
+        switch level {
+        case 1...4: return "Casual Viewer"
+        case 5...9: return "Film Enthusiast"
+        case 10...14: return "Cinema Fan"
+        case 15...19: return "Film Buff"
+        case 20...29: return "Film Aficionado"
+        case 30...39: return "Cinema Connoisseur"
+        case 40...49: return "Screen Scholar"
+        case 50...69: return "Film Historian"
+        case 70...99: return "Cinema Master"
+        default: return "Film Legend"
+        }
+    }
+}
+
+private struct SelectedCategory: Hashable, Identifiable {
+    let id: UUID
 }
 
 #Preview {
     ExpandableCategoryListView()
         .environment(AppState())
-        .modelContainer(for: [CategoryModel.self])
+        .modelContainer(for: [CategoryModel.self, UserProfile.self, SubCategory.self, UserPreferences.self])
 }

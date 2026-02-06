@@ -39,25 +39,40 @@ enum ContentTypeFilter: String, CaseIterable, Codable {
         }
     }
 
-    /// Categories that match this content type
-    var matchingCategoryTitles: Set<String> {
+    private var metadataTag: CategoryMetadata.ContentType? {
         switch self {
-        case .all:
-            return []
-        case .people:
-            return ["Directors and Creators", "Actors and Performances"]
-        case .films:
-            return ["Core Film Knowledge", "Genres", "Franchises and Series", "World Cinema", "Movie Eras"]
-        case .behindTheScenes:
-            return ["Behind the Scenes"]
-        case .awards:
-            return ["Awards and Recognition"]
+        case .all: return nil
+        case .people: return .people
+        case .films: return .films
+        case .behindTheScenes: return .behindTheScenes
+        case .awards: return .awards
         }
     }
 
     func matches(categoryTitle: String) -> Bool {
         guard self != .all else { return true }
-        return matchingCategoryTitles.contains(categoryTitle)
+
+        if let metadata = CategoryMetadata.forCategory(title: categoryTitle),
+           let metadataTag {
+            return metadata.contentTypes.contains(metadataTag)
+        }
+
+        return legacyTitleMatch(categoryTitle)
+    }
+
+    private func legacyTitleMatch(_ categoryTitle: String) -> Bool {
+        switch self {
+        case .all:
+            return true
+        case .people:
+            return ["Directors and Creators", "Actors and Performances"].contains(categoryTitle)
+        case .films:
+            return ["The Essentials", "Core Film Knowledge", "Genres", "Franchises and Series", "World Cinema", "Movie Eras"].contains(categoryTitle)
+        case .behindTheScenes:
+            return ["Behind the Scenes", "Film Craft and Behind the Scenes"].contains(categoryTitle)
+        case .awards:
+            return ["Awards and Recognition"].contains(categoryTitle)
+        }
     }
 }
 
@@ -78,23 +93,37 @@ enum RegionFilter: String, CaseIterable, Codable {
         }
     }
 
-    /// Categories that match this region
-    var matchingCategoryTitles: Set<String> {
+    private var metadataTag: CategoryMetadata.Region? {
         switch self {
-        case .all:
-            return []
-        case .hollywood:
-            return ["Core Film Knowledge", "Franchises and Series"]
-        case .worldCinema:
-            return ["World Cinema"]
-        case .eraFocused:
-            return ["Movie Eras"]
+        case .all: return nil
+        case .hollywood: return .hollywood
+        case .worldCinema: return .worldCinema
+        case .eraFocused: return .eraFocused
         }
     }
 
     func matches(categoryTitle: String) -> Bool {
         guard self != .all else { return true }
-        return matchingCategoryTitles.contains(categoryTitle)
+
+        if let metadata = CategoryMetadata.forCategory(title: categoryTitle),
+           let metadataTag {
+            return metadata.regions.contains(metadataTag)
+        }
+
+        return legacyTitleMatch(categoryTitle)
+    }
+
+    private func legacyTitleMatch(_ categoryTitle: String) -> Bool {
+        switch self {
+        case .all:
+            return true
+        case .hollywood:
+            return ["The Essentials", "Core Film Knowledge", "Franchises and Series"].contains(categoryTitle)
+        case .worldCinema:
+            return categoryTitle == "World Cinema"
+        case .eraFocused:
+            return categoryTitle == "Movie Eras"
+        }
     }
 }
 
@@ -142,22 +171,36 @@ enum DifficultyFilter: String, CaseIterable, Codable {
         }
     }
 
-    /// Categories that match this difficulty level
-    var matchingCategoryTitles: Set<String> {
+    private var metadataTag: CategoryMetadata.Difficulty? {
         switch self {
-        case .all:
-            return []
-        case .easy:
-            return ["Core Film Knowledge", "Genres", "Actors and Performances", "Franchises and Series"]
-        case .intermediate:
-            return ["Directors and Creators", "World Cinema", "Movie Eras", "Awards and Recognition"]
-        case .filmNerd:
-            return ["Behind the Scenes", "Film Craft and Behind the Scenes"]
+        case .all: return nil
+        case .easy: return .easy
+        case .intermediate: return .intermediate
+        case .filmNerd: return .filmNerd
         }
     }
 
     func matches(categoryTitle: String) -> Bool {
         guard self != .all else { return true }
-        return matchingCategoryTitles.contains(categoryTitle)
+
+        if let metadata = CategoryMetadata.forCategory(title: categoryTitle),
+           let metadataTag {
+            return metadata.difficulty == metadataTag
+        }
+
+        return legacyTitleMatch(categoryTitle)
+    }
+
+    private func legacyTitleMatch(_ categoryTitle: String) -> Bool {
+        switch self {
+        case .all:
+            return true
+        case .easy:
+            return ["The Essentials", "Core Film Knowledge", "Genres", "Actors and Performances", "Franchises and Series"].contains(categoryTitle)
+        case .intermediate:
+            return ["Directors and Creators", "World Cinema", "Movie Eras", "Awards and Recognition"].contains(categoryTitle)
+        case .filmNerd:
+            return ["Behind the Scenes", "Film Craft and Behind the Scenes"].contains(categoryTitle)
+        }
     }
 }
